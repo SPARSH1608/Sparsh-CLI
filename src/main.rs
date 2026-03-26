@@ -10,7 +10,7 @@ struct Cli {
 }
 #[derive(Display, Debug, Subcommand)]
 enum Commands {
-    Send { file: Option<String> },
+    Send { file: Vec<String> },
     //struct style enum
     Get {},
 }
