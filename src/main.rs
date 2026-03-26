@@ -15,25 +15,27 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     let command = &args[1];
-
     if command == "send" {
-        if args.len() < 3 {
-            println!("No file found")
+        if args.len()>=3 {
+            let file_path=&args[2];
+            let mut file=File::open(file_path)?;
+            send_stream(&mut file)?;
+        }else {
+            let mut stdin=io::stdin();
+            send_stream(&mut stdin)?;
         }
-        let file_path = &args[2];
-        send_file(file_path)?;
     } else {
         println!("unknown command")
     }
     Ok(())
 }
 
-fn send_file(path: &str) -> Result<(), io::Error> {
-    let mut file = File::open(path)?;
+//reader is any type T which implements the Read Trait
+fn send_stream<T:Read>(reader:&mut T)->Result<(), io::Error>{
     let mut buffer = [0; 1024];
 
     loop {
-        let bytes_read = file.read(&mut buffer)?;
+        let bytes_read = reader.read(&mut buffer)?;
 
         if bytes_read == 0 {
             break;
