@@ -37,8 +37,15 @@ fn send_file(base: &Path, path: &Path, writer: &mut impl Write) -> Result<(), io
 
     let rel_path = path.strip_prefix(base).unwrap();
     let rel_str = rel_path.to_string_lossy();
-    let header = format!("FILE {} {} {}\n", rel_str.len(), rel_str, size);
+
+    let path_bytes = rel_str.as_bytes();
+    let path_len = rel_str.len();
+    //FILE 9 5\n
+    let header = format!("FILE {} {} \n", path_len, size);
     writer.write_all(header.as_bytes());
+    //sub/c.txt
+    writer.write_all(path_bytes)?;
+
     pipe(&mut file, writer)?;
     Ok(())
 }
@@ -56,3 +63,5 @@ fn send_dir(base: &Path, path: &Path, stdout: &mut impl Write) -> Result<(), io:
     Ok(())
 }
 //file header FILE <path_length> <path> <size>\n
+//File 9 5 \n
+//sub/c.txthello
