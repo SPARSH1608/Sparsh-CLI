@@ -1,7 +1,7 @@
 use crate::pipe::pipe;
 use crate::utils::compute_hash;
 use std::fs::{self, File};
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::path::Path;
 
 pub fn execute(files: Vec<String>) -> Result<(), io::Error> {
@@ -48,7 +48,8 @@ fn send_file(base: &Path, path: &Path, writer: &mut impl Write) -> Result<(), io
     //sub/c.txt
     writer.write_all(path_bytes)?;
 
-    pipe(&mut file, writer)?;
+    // pipe(&mut file, writer)?;
+    send_chunks(&mut file, writer)?;
     Ok(())
 }
 
@@ -67,3 +68,17 @@ fn send_dir(base: &Path, path: &Path, stdout: &mut impl Write) -> Result<(), io:
 //file header FILE <path_length> <path> <size>\n
 //File 9 5 \n
 //sub/c.txthello
+
+fn send_chunks(file: &mut impl Read, writer: &mut impl Write) -> Result<(), io::Error> {
+    let mut buffer = [0u8; 1024];
+    loop {
+        let bytes_read = file.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+        let header = format!("CHUNK {}\n", bytes_read);
+        writer.write_all(header.as_bytes())?;
+        writer.write_all(&buffer[..bytes_read])?;
+    }
+    Ok(())
+}

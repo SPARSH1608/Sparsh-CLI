@@ -73,14 +73,37 @@ fn recieve() -> Result<(), io::Error> {
         let mut remaining = size;
         let mut buffer = [0; 1024];
         while remaining > 0 {
-            let read_size = remaining.min(1024);
-            let bytes_read = reader.read(&mut buffer[..read_size])?;
-            if bytes_read == 0 {
-                break;
+            let mut chunk_header = String::new();
+            let bytes = reader.read_line(&mut chunk_header)?;
+            if bytes == 0 {
+                eprintln!("Unexpected EOF while reading chunk header");
+                return Ok(());
             }
-            file.write_all(&buffer[..bytes_read])?;
-            hasher.update(&buffer[..bytes_read]);
-            remaining -= bytes_read;
+            let parts: Vec<&str> = chunk_header.trim().split_whitespace().collect();
+            if parts.len() != 2 || parts[0] != "CHUNK" {
+                eprintln!("Invalid chunk header: {}", chunk_header);
+                return Ok(());
+            }
+            let chunk_size: usize = match parts[1].parse() {
+                Ok(v) => v,
+                Err(_) => {
+                    eprintln!("Invalid chunk size");
+                    return Ok(());
+                }
+            };
+            let mut chunk_buffer = vec![0u8; chunk_size];
+            let mut read_total = 0;
+            while read_total < chunk_size {
+                let n = reader.read(&mut chunk_buffer[read_total..])?;
+                if n == 0 {
+                    eprintln!("Unexpected EOF in chunk data");
+                    return Ok(());
+                }
+                read_total += n;
+            }
+            file.write_all(&chunk_buffer)?;
+            hasher.update(&chunk_buffer);
+            remaining -= chunk_size;
         }
         let computed_hash = format!("{:x}", hasher.finalize());
         if computed_hash != expected_hash {
