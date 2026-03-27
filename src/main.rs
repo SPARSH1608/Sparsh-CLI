@@ -16,7 +16,7 @@ enum Commands {
 }
 fn main() -> Result<(), std::io::Error> {
     let cli = Cli::parse();
-    println!("{:?}", cli);
+    // eprintln!("{:?}", cli);
 
     match cli.command {
         Commands::Send { file } => commands::send::execute(file)?,

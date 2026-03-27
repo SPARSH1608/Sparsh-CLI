@@ -1,9 +1,6 @@
 use std::io::{self, Read, Write};
 
-pub fn pipe<R: Read, W: Write>(
-    reader: &mut R,
-    writer: &mut W,
-) -> Result<(), io::Error> {
+pub fn pipe<R: Read, W: Write>(reader: &mut R, writer: &mut W) -> Result<(), io::Error> {
     let mut buffer = [0; 1024];
 
     loop {

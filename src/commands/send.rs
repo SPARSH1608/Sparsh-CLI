@@ -1,5 +1,4 @@
 use crate::pipe::pipe;
-use std::fmt::format;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;
@@ -38,12 +37,7 @@ fn send_file(base: &Path, path: &Path, writer: &mut impl Write) -> Result<(), io
 
     let rel_path = path.strip_prefix(base).unwrap();
     let rel_str = rel_path.to_string_lossy();
-    let header = format!(
-        "FILE WITH PATH_LEN {} PATH {} SIZE {}\n",
-        rel_str.len(),
-        rel_str,
-        size
-    );
+    let header = format!("FILE {} {} {}\n", rel_str.len(), rel_str, size);
     writer.write_all(header.as_bytes());
     pipe(&mut file, writer)?;
     Ok(())
