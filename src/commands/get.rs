@@ -2,6 +2,8 @@ use std::fs::{self};
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::Path;
 
+use sha2::{Digest, Sha256};
+
 pub fn execute() -> Result<(), io::Error> {
     recieve()
 }
@@ -21,10 +23,12 @@ fn recieve() -> Result<(), io::Error> {
         //Splits a string at most n times, producing ≤ n parts. split by ' '
         let parts: Vec<&str> = header.trim().split_whitespace().collect();
 
-        if parts.len() != 3 || parts[0] != "FILE" {
+        if parts.len() != 4 || parts[0] != "FILE" {
             eprintln!("Invalid Header: {}", header);
             return Ok(());
         }
+        let expected_hash = parts[3];
+        let mut hasher = Sha256::new();
         let path_len: usize = match parts[1].parse() {
             Ok(v) => v,
             Err(_) => {
@@ -75,7 +79,14 @@ fn recieve() -> Result<(), io::Error> {
                 break;
             }
             file.write_all(&buffer[..bytes_read])?;
+            hasher.update(&buffer[..bytes_read]);
             remaining -= bytes_read;
+        }
+        let computed_hash = format!("{:x}", hasher.finalize());
+        if computed_hash != expected_hash {
+            eprintln!("Hash mismatched for file {:?}", path);
+            fs::remove_file(path)?;
+            return Ok(());
         }
     }
     Ok(())

@@ -1,4 +1,5 @@
 use crate::pipe::pipe;
+use crate::utils::compute_hash;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;
@@ -40,8 +41,9 @@ fn send_file(base: &Path, path: &Path, writer: &mut impl Write) -> Result<(), io
 
     let path_bytes = rel_str.as_bytes();
     let path_len = rel_str.len();
+    let hash = compute_hash(path)?;
     //FILE 9 5\n
-    let header = format!("FILE {} {} \n", path_len, size);
+    let header = format!("FILE {} {} {}\n", path_len, size, hash);
     writer.write_all(header.as_bytes());
     //sub/c.txt
     writer.write_all(path_bytes)?;

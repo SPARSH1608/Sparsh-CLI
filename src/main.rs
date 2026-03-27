@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use strum_macros::Display;
 mod commands;
 mod pipe;
+mod utils;
 #[derive(Parser, Debug)]
 struct Cli {
     #[command(subcommand)]
