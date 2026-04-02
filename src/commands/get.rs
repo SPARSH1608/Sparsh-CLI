@@ -5,13 +5,18 @@ use std::path::Path;
 use sha2::{Digest, Sha256};
 
 pub fn execute() -> Result<(), io::Error> {
-    recieve()
+    // receive()
+    let stdin = io::stdin();
+    receive_from(stdin)
+    // Ok(())
 }
 
-fn recieve() -> Result<(), io::Error> {
-    let stdin = io::stdin();
+pub fn receive_from<R: Read>(input: R) -> Result<(), io::Error> {
+    // let stdin = io::stdin();
+    //instead of using stdin we gonna make input Generic
+    //input can be anythng that implements the read trait
     //BufReader::new takes something which implement Read Trait
-    let mut reader = BufReader::new(stdin);
+    let mut reader = BufReader::new(input);
     loop {
         let mut header = String::new();
         //read_line Reads all bytes until a newline
@@ -71,7 +76,6 @@ fn recieve() -> Result<(), io::Error> {
         let mut file = fs::File::create(path)?;
 
         let mut remaining = size;
-        let mut buffer = [0; 1024];
         while remaining > 0 {
             let mut chunk_header = String::new();
             let bytes = reader.read_line(&mut chunk_header)?;

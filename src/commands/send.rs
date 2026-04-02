@@ -6,18 +6,22 @@ use std::path::Path;
 
 pub fn execute(files: Vec<String>) -> Result<(), io::Error> {
     let mut stdout = io::stdout();
+    send_to(files, &mut stdout)
+}
+pub fn send_to<W: Write>(files: Vec<String>, writer: &mut W) -> Result<(), io::Error> {
+    // let mut stdout = io::stdout();
     if files.is_empty() {
         let mut stdin = io::stdin();
-        pipe(&mut stdin, &mut stdout)?;
+        pipe(&mut stdin, writer)?;
         return Ok(());
     }
     for path in files {
         let path_ref = Path::new(&path);
         if path_ref.is_file() {
             let base = path_ref.parent().unwrap_or(Path::new(""));
-            send_file(base, path_ref, &mut stdout)?;
+            send_file(base, path_ref, writer)?;
         } else if path_ref.is_dir() {
-            send_dir(path_ref, path_ref, &mut stdout)?;
+            send_dir(path_ref, path_ref, writer)?;
         } else {
             eprintln!("Invalid path {}", path)
         }
@@ -44,7 +48,7 @@ fn send_file(base: &Path, path: &Path, writer: &mut impl Write) -> Result<(), io
     let hash = compute_hash(path)?;
     //FILE 9 5\n
     let header = format!("FILE {} {} {}\n", path_len, size, hash);
-    writer.write_all(header.as_bytes());
+    writer.write_all(header.as_bytes())?;
     //sub/c.txt
     writer.write_all(path_bytes)?;
 
